@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Local Server Finder</title>
+  <script>
+    async function findLiveServer() {
+      const base = "http://192.168.1.";
+      const port = ":3001";
+      const paths = Array.from({ length: 9 }, (_, i) => `${base}${i + 1}${port}`);
+
+      const controller = new AbortController();
+      const timeout = 3000; // 3 seconds timeout per request
+
+      const checks = paths.map((url) =>
+        fetch(url, {
+          method: "HEAD",
+          mode: "no-cors", // Prevents CORS error blocking (but won't get status)
+          signal: controller.signal
+        })
+          .then(() => {
+            // Redirect immediately on any response (HEAD + no-cors won't throw if server is live)
+            controller.abort(); // stop other fetches
+            window.location.href = url;
+          })
+          .catch(() => {
+            // ignore fetch errors
+          })
+      );
+
+      // Set a fallback timeout to avoid hanging forever
+      setTimeout(() => controller.abort(), timeout);
+    }
+
+    window.onload = findLiveServer;
+  </script>
+</head>
+<body>
+  <h1>Searching for local server...</h1>
+</body>
+</html>
