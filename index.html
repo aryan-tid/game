@@ -4,44 +4,57 @@
   <meta charset="UTF-8" />
   <title>Local Server Finder</title>
   <script>
-  async function findLiveServer() {
-    const base = "http://192.168.1.";
-    const port = ":3001";
-    const timeout = 3000;
-    const paths = Array.from({ length: 9 }, (_, i) => `${base}${i + 1}${port}`);
+    async function testServer(url, timeout) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        let finished = false;
 
-    let found = false;
+        const timer = setTimeout(() => {
+          if (!finished) {
+            finished = true;
+            resolve(null); // timeout
+          }
+        }, timeout);
 
-    for (const url of paths) {
-      if (found) break;
+        img.onload = () => {
+          if (!finished) {
+            clearTimeout(timer);
+            finished = true;
+            resolve(url); // success
+          }
+        };
 
-      const img = new Image();
-      img.src = url + "/styles.css?" + Date.now(); // avoid caching
+        img.onerror = () => {
+          if (!finished) {
+            clearTimeout(timer);
+            finished = true;
+            resolve(null); // failed to load
+          }
+        };
 
-      const timer = setTimeout(() => {
-        img.onerror = img.onload = null; // clean up
-      }, timeout);
-
-      img.onload = () => {
-        clearTimeout(timer);
-        if (!found) {
-          found = true;
-          window.location.href = url;
-        }
-      };
-
-      img.onerror = () => {
-        clearTimeout(timer);
-        // continue to next IP
-      };
-
-      // Wait a bit before checking the next IP to avoid network flood
-      await new Promise(r => setTimeout(r, 300));
+        img.src = url + "/test.txt?" + Date.now(); // cache-bust
+      });
     }
-  }
 
-  window.onload = findLiveServer;
-</script>
+    async function findLiveServer() {
+      const base = "http://192.168.1.";
+      const port = ":3001";
+      const timeout = 3000;
+      const paths = Array.from({ length: 9 }, (_, i) => `${base}${i + 1}${port}`);
+
+      for (const url of paths) {
+        const result = await testServer(url, timeout);
+        if (result) {
+          window.location.href = result;
+          break;
+        }
+        // Wait a bit before next test
+        await new Promise(r => setTimeout(r, 200));
+      }
+    }
+
+    window.onload = findLiveServer;
+  </script>
 </head>
 <body>
   <h1>Searching for local server...</h1>
