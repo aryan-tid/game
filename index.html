@@ -4,59 +4,54 @@
   <meta charset="UTF-8" />
   <title>Local Server Finder</title>
   <script>
-    async function testServer(url, timeout) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        let finished = false;
-
-        const timer = setTimeout(() => {
-          if (!finished) {
-            finished = true;
-            resolve(null); // timeout
-          }
-        }, timeout);
-
-        img.onload = () => {
-          if (!finished) {
-            clearTimeout(timer);
-            finished = true;
-            resolve(url); // success
-          }
-        };
-
-        img.onerror = () => {
-          if (!finished) {
-            clearTimeout(timer);
-            finished = true;
-            resolve(null); // failed to load
-          }
-        };
-
-        img.src = url + "/test.txt?" + Date.now(); // cache-bust
-      });
-    }
-
     async function findLiveServer() {
       const base = "http://192.168.1.";
       const port = ":3001";
       const timeout = 3000;
       const paths = Array.from({ length: 9 }, (_, i) => `${base}${i + 1}${port}`);
 
+      let found = false;
+
       for (const url of paths) {
-        const result = await testServer(url, timeout);
-        if (result) {
-          window.location.href = result;
-          break;
-        }
-        // Wait a bit before next test
-        await new Promise(r => setTimeout(r, 200));
+        if (found) break;
+
+        const img = new Image();
+        img.src = url + "/favicon.ico?" + Date.now(); // avoid caching
+
+        const timer = setTimeout(() => {
+          img.onerror = img.onload = null; // clean up
+        }, timeout);
+
+        img.onload = () => {
+          clearTimeout(timer);
+          if (!found) {
+            found = true;
+            window.location.href = url;
+          }
+        };
+
+        img.onerror = () => {
+          clearTimeout(timer);
+          // continue to next IP
+        };
+
+        // Wait a bit before checking the next IP to avoid network flood
+        await new Promise(r => setTimeout(r, 300));
       }
     }
 
     window.onload = findLiveServer;
   </script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Searching for local server...</h1>
+  <h1>🔍 Searching for local server...</h1>
+  <p>Please wait while we locate the active device on your network.</p>
 </body>
 </html>
