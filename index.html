@@ -64,7 +64,6 @@
       background-color: #a270f0;
     }
 
-    /* Success Dialog */
     .dialog {
       position: fixed;
       inset: 0;
@@ -92,6 +91,22 @@
       display: flex;
     }
 
+    .progress-bar {
+      height: 10px;
+      width: 100%;
+      border-radius: 5px;
+      background: #333;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%;
+      background-color: var(--primary);
+      transition: width 0.2s ease;
+    }
+
     @keyframes scaleIn {
       from {
         transform: scale(0.5);
@@ -102,92 +117,97 @@
         opacity: 1;
       }
     }
-
-    .spinner {
-      border: 4px solid #333;
-      border-top: 4px solid var(--primary);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 1rem auto;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h1>Download Manager</h1>
-    <div class="spinner" id="spinner"></div>
-    <div class="status" id="status">Preparing download...</div>
-    <button class="btn" id="retryBtn" style="display:none">Retry Download</button>
+    <h1>☕ Welcome, Brave Downloader!</h1>
+    <p>Let's fetch your secret file 🕵️</p>
+    <div class="status" id="status">Getting things ready...</div>
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+    <button class="btn" id="startBtn">Start the Magic ✨</button>
   </div>
 
   <!-- Success Dialog -->
   <div class="dialog" id="dialog">
     <div class="dialog-content">
-      <h2>✅ Download Successful!</h2>
-      <p>Your file has been downloaded.</p>
+      <h2>🎉 Mission Accomplished!</h2>
+      <p>Your file is now yours. Go conquer the world... or read it 📖.</p>
       <button class="btn" onclick="closeDialog()">Close</button>
     </div>
   </div>
 
   <script>
+    const progress = document.getElementById("progress");
     const statusText = document.getElementById("status");
-    const spinner = document.getElementById("spinner");
     const dialog = document.getElementById("dialog");
-    const retryBtn = document.getElementById("retryBtn");
+    const startBtn = document.getElementById("startBtn");
 
-    function getDownloadLink() {
+    function getDownloadFile() {
       const now = new Date();
-      const isBeforeNoon = now.getHours() < 12;
-      return isBeforeNoon ? "java.pdf" : "web.pdf";
+      const hour = now.getHours();
+      return hour < 12 ? "java.pdf" : "web.pdf";
     }
 
-    function simulateDownload() {
-      const link = getDownloadLink();
-      const a = document.createElement("a");
-      a.href = link;
-      a.download = link;
-      document.body.appendChild(a);
+    async function downloadFile() {
+      const fileName = getDownloadFile();
+      const response = await fetch(fileName);
+
+      if (!response.ok) {
+        statusText.textContent = "😢 Download failed! Try again later.";
+        return;
+      }
+
+      const contentLength = +response.headers.get("Content-Length");
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
 
       statusText.textContent = "Downloading...";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+
+        const percent = ((received / contentLength) * 100).toFixed(1);
+        progress.style.width = percent + "%";
+        statusText.textContent = `Downloading... ${percent}%`;
+      }
+
+      const blob = new Blob(chunks);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      statusText.textContent = "Finalizing...";
       setTimeout(() => {
-        a.click();
-        document.body.removeChild(a);
         showSuccessDialog();
-      }, 2000);
+      }, 500);
     }
 
     function showSuccessDialog() {
-      spinner.style.display = "none";
-      statusText.textContent = "Download complete.";
       dialog.classList.add("show");
+      statusText.textContent = "Done!";
     }
 
     function closeDialog() {
       dialog.classList.remove("show");
-      retryBtn.style.display = "inline-block";
-      statusText.textContent = "You can retry the download.";
+      statusText.textContent = "Want to download again? Hit the button!";
+      progress.style.width = "0%";
     }
 
-    // Start download automatically
-    setTimeout(simulateDownload, 1000);
-
-    // Retry button
-    retryBtn.addEventListener("click", () => {
-      retryBtn.style.display = "none";
-      spinner.style.display = "block";
-      statusText.textContent = "Retrying...";
-      setTimeout(simulateDownload, 1000);
+    startBtn.addEventListener("click", () => {
+      startBtn.disabled = true;
+      downloadFile();
     });
   </script>
-
 </body>
 </html>
