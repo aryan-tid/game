@@ -1,1010 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Java PDF Download</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Material 3 Download Manager</title>
+  <style>
+    :root {
+      --primary: #bb86fc;
+      --on-primary: #000;
+      --surface: #121212;
+      --on-surface: #fff;
+      --success: #03dac6;
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            cursor: none;
-        }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--surface);
+      color: var(--on-surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
 
-        .custom-cursor {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.1s ease;
-            mix-blend-mode: difference;
-        }
+    .card {
+      background: #1e1e1e;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+    }
 
-        .download-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            text-align: center;
-            max-width: 450px;
-            width: 90%;
-            transform: translateY(20px);
-            opacity: 0;
-            animation: slideIn 0.8s ease-out forwards;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+    }
 
-        .download-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
-        }
+    .status {
+      font-size: 1rem;
+      margin-top: 1rem;
+      color: #aaa;
+    }
 
-        @keyframes slideIn {
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
+    .btn {
+      margin-top: 1.5rem;
+      background-color: var(--primary);
+      color: var(--on-primary);
+      padding: 0.8rem 1.2rem;
+      border: none;
+      border-radius: 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-        .download-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 24px;
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: bounce 2s infinite;
-            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+    .btn:hover {
+      background-color: #a270f0;
+    }
 
-        .download-icon::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-            transform: rotate(45deg);
-            animation: iconShine 3s infinite;
-        }
+    /* Success Dialog */
+    .dialog {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
 
-        @keyframes iconShine {
-            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-            100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-        }
+    .dialog-content {
+      background: #222;
+      color: var(--on-surface);
+      padding: 2rem;
+      border-radius: 1.5rem;
+      text-align: center;
+      animation: scaleIn 0.4s ease;
+    }
 
-        .download-icon:hover {
-            transform: scale(1.1) rotate(5deg);
-            animation-play-state: paused;
-        }
+    .dialog h2 {
+      margin-bottom: 1rem;
+    }
 
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0) rotate(0deg);
-            }
-            40% {
-                transform: translateY(-10px) rotate(2deg);
-            }
-            60% {
-                transform: translateY(-5px) rotate(-1deg);
-            }
-        }
+    .dialog.show {
+      display: flex;
+    }
 
-        .download-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: white;
-            z-index: 2;
-            position: relative;
-            transition: all 0.3s ease;
-        }
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
 
-        .download-icon:hover svg {
-            transform: scale(1.1);
-        }
+    .spinner {
+      border: 4px solid #333;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
 
-        h1 {
-            color: white;
-            font-size: 2.2em;
-            margin-bottom: 16px;
-            font-weight: 700;
-            animation: titleGlow 3s ease-in-out infinite alternate;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        h1:hover {
-            transform: scale(1.05);
-            text-shadow: 0 0 20px rgba(255,255,255,0.8);
-        }
-
-        @keyframes titleGlow {
-            0% { text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-            100% { text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.4); }
-        }
-
-        .dialogue {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.1em;
-            margin-bottom: 32px;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            animation: textPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes textPulse {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 1; }
-        }
-
-        .progress-container {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: containerShine 2s infinite;
-        }
-
-        @keyframes containerShine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .progress-container:hover {
-            transform: scale(1.02);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            position: relative;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .progress-bar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
-            border-radius: 6px 6px 0 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00d2ff, #3a7bd5, #00d2ff);
-            background-size: 200% 100%;
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 6px;
-            position: relative;
-            animation: gradientMove 2s linear infinite;
-            box-shadow: 0 2px 10px rgba(0, 210, 255, 0.5);
-        }
-
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .progress-text {
-            color: white;
-            font-size: 1.4em;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            animation: numberCount 0.1s ease;
-        }
-
-        @keyframes numberCount {
-            0% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .status {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.95em;
-            margin-top: 8px;
-            animation: statusBlink 1s ease-in-out infinite alternate;
-        }
-
-        @keyframes statusBlink {
-            0% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-
-        .coffee-animation {
-            display: inline-block;
-            font-size: 1.2em;
-            animation: wiggle 1s ease-in-out infinite;
-        }
-
-        @keyframes wiggle {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-        }
-
-        .floating-particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            animation: float 6s infinite linear;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        .success-container {
-            display: none;
-            position: relative;
-        }
-
-        .success-checkmark {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 20px;
-            position: relative;
-            animation: successScale 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes successScale {
-            0% { 
-                transform: scale(0) rotate(-180deg);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.2) rotate(-90deg);
-                opacity: 0.8;
-            }
-            100% { 
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
-        }
-
-        .checkmark-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            position: relative;
-            box-shadow: 
-                0 0 0 4px rgba(76, 175, 80, 0.3),
-                0 0 0 8px rgba(76, 175, 80, 0.1),
-                0 10px 30px rgba(76, 175, 80, 0.4);
-            animation: pulseGreen 2s infinite;
-        }
-
-        @keyframes pulseGreen {
-            0%, 100% { 
-                box-shadow: 
-                    0 0 0 4px rgba(76, 175, 80, 0.3),
-                    0 0 0 8px rgba(76, 175, 80, 0.1),
-                    0 10px 30px rgba(76, 175, 80, 0.4);
-            }
-            50% { 
-                box-shadow: 
-                    0 0 0 8px rgba(76, 175, 80, 0.4),
-                    0 0 0 16px rgba(76, 175, 80, 0.2),
-                    0 15px 40px rgba(76, 175, 80, 0.6);
-            }
-        }
-
-        .checkmark-stem {
-            position: absolute;
-            width: 6px;
-            height: 20px;
-            background: white;
-            left: 42px;
-            top: 50px;
-            border-radius: 3px;
-            transform-origin: bottom;
-            animation: drawStem 0.4s ease-out 0.4s both;
-        }
-
-        .checkmark-kick {
-            position: absolute;
-            width: 12px;
-            height: 6px;
-            background: white;
-            left: 30px;
-            top: 56px;
-            border-radius: 3px;
-            transform-origin: right;
-            animation: drawKick 0.3s ease-out 0.6s both;
-        }
-
-        @keyframes drawStem {
-            0% { 
-                height: 0;
-                opacity: 0;
-            }
-            100% { 
-                height: 20px;
-                opacity: 1;
-            }
-        }
-
-        @keyframes drawKick {
-            0% { 
-                width: 0;
-                opacity: 0;
-            }
-            100% { 
-                width: 12px;
-                opacity: 1;
-            }
-        }
-
-        .ripple-effect {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            pointer-events: none;
-            animation: ripple 0.6s linear;
-        }
-
-        @keyframes ripple {
-            0% {
-                transform: scale(0);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-
-        .background-waves {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .wave {
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: waveMove 20s linear infinite;
-        }
-
-        @keyframes waveMove {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        .completed {
-            animation: completedPulse 1s ease-in-out infinite;
-        }
-
-        @keyframes completedPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .interactive-border {
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
-            background-size: 400% 400%;
-            border-radius: 26px;
-            z-index: -1;
-            opacity: 0;
-            animation: borderGlow 4s ease-in-out infinite;
-        }
-
-        @keyframes borderGlow {
-            0%, 100% { 
-                background-position: 0% 50%;
-                opacity: 0;
-            }
-            50% { 
-                background-position: 100% 50%;
-                opacity: 0.3;
-            }
-        }
-
-        .download-container:hover .interactive-border {
-            opacity: 0.5;
-        }
-    </style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="custom-cursor" id="cursor"></div>
-    <div class="background-waves">
-        <div class="wave"></div>
+
+  <div class="card">
+    <h1>Download Manager</h1>
+    <div class="spinner" id="spinner"></div>
+    <div class="status" id="status">Preparing download...</div>
+    <button class="btn" id="retryBtn" style="display:none">Retry Download</button>
+  </div>
+
+  <!-- Success Dialog -->
+  <div class="dialog" id="dialog">
+    <div class="dialog-content">
+      <h2>✅ Download Successful!</h2>
+      <p>Your file has been downloaded.</p>
+      <button class="btn" onclick="closeDialog()">Close</button>
     </div>
-    <div class="floating-particles" id="particles"></div>
-    
-    <div class="download-container" id="container">
-        <div class="interactive-border"></div>
-        
-        <div class="download-icon" id="downloadIcon">
-            <svg viewBox="0 0 24 24">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-            </svg>
-        </div>
-        
-        <div class="success-container" id="successContainer">
-            <div class="success-checkmark">
-                <div class="checkmark-circle">
-                    <div class="checkmark-stem"></div>
-                    <div class="checkmark-kick"></div>
-                </div>
-            </div>
-        </div>
-        
-        <h1 id="title">Java PDF Download</h1>
-        
-        <div class="dialogue" id="dialogue">
-            Preparing your Java PDF... Hold on to your coffee! ☕
-        </div>
-        
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text" id="progressText">0%</div>
-            <div class="status" id="status">Initializing download...</div>
-        </div>
-    </div>
+  </div>
 
-    <script>
-        class DownloadManager {
-            constructor() {
-                this.progress = 0;
-                this.isComplete = false;
-                this.xhr = null;
-                this.startTime = Date.now();
-                this.dialogues = [
-                    "Hold on to your coffee! ☕ We're brewing your PDF...",
-                    "Compiling knowledge faster than a Java program! 🚀",
-                    "Loading... This is taking longer than Maven dependencies! 📦",
-                    "Downloading at the speed of light... or at least broadband! 💫",
-                    "Just a few more bytes... like debugging, but fun! 🐛",
-                    "Your PDF is almost ready to Exception... I mean, excel! 😄",
-                    "Almost there! Even faster than System.out.println()! ⚡",
-                    "99% complete... Just like that one stubborn unit test! 🧪"
-                ];
-                this.completedDialogues = [
-                    "Boom! 💥 Your Java PDF has landed successfully!",
-                    "Download complete! Time to Java your way to success! ☕",
-                    "Mission accomplished! Your PDF is ready to compile knowledge! 🎯",
-                    "Success! This PDF is more reliable than legacy code! ✨"
-                ];
-                
-                this.initInteractivity();
-                this.initParticles();
-                this.startRealDownload();
-            }
-            
-            initInteractivity() {
-                // Custom cursor
-                const cursor = document.getElementById('cursor');
-                document.addEventListener('mousemove', (e) => {
-                    cursor.style.left = e.clientX - 10 + 'px';
-                    cursor.style.top = e.clientY - 10 + 'px';
-                });
-                
-                // Interactive elements
-                document.querySelectorAll('.download-container, .download-icon, h1').forEach(el => {
-                    el.addEventListener('mouseenter', () => {
-                        cursor.style.transform = 'scale(1.5)';
-                    });
-                    el.addEventListener('mouseleave', () => {
-                        cursor.style.transform = 'scale(1)';
-                    });
-                });
-                
-                // Click ripple effect
-                document.addEventListener('click', (e) => {
-                    this.createRipple(e.clientX, e.clientY);
-                });
-                
-                // Hover effects for progress container
-                const progressContainer = document.getElementById('progressContainer');
-                progressContainer.addEventListener('mouseenter', () => {
-                    progressContainer.style.transform = 'scale(1.05) rotateX(5deg)';
-                });
-                progressContainer.addEventListener('mouseleave', () => {
-                    progressContainer.style.transform = 'scale(1) rotateX(0deg)';
-                });
-            }
-            
-            createRipple(x, y) {
-                const ripple = document.createElement('div');
-                ripple.className = 'ripple-effect';
-                ripple.style.left = x - 25 + 'px';
-                ripple.style.top = y - 25 + 'px';
-                ripple.style.width = '50px';
-                ripple.style.height = '50px';
-                
-                document.body.appendChild(ripple);
-                
-                setTimeout(() => {
-                    document.body.removeChild(ripple);
-                }, 600);
-            }
-            
-            initParticles() {
-                const particlesContainer = document.getElementById('particles');
-                for (let i = 0; i < 30; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'particle';
-                    particle.style.left = Math.random() * 100 + '%';
-                    particle.style.animationDelay = Math.random() * 6 + 's';
-                    particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-                    
-                    // Random particle colors
-                    const colors = ['rgba(255,255,255,0.6)', 'rgba(255,107,107,0.4)', 'rgba(0,210,255,0.4)'];
-                    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-                    
-                    particlesContainer.appendChild(particle);
-                }
-            }
-            
-            startRealDownload() {
-                // Create a larger dummy PDF for realistic download timing
-                const pdfContent = this.createDetailedPDF();
-                const blob = new Blob([pdfContent], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                
-                // Use XMLHttpRequest to track real download progress
-                this.xhr = new XMLHttpRequest();
-                this.xhr.open('GET', url, true);
-                this.xhr.responseType = 'blob';
-                
-                this.xhr.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) {
-                        const percentComplete = (e.loaded / e.total) * 100;
-                        this.updateProgress(percentComplete, e.loaded, e.total);
-                    }
-                });
-                
-                this.xhr.addEventListener('load', () => {
-                    if (this.xhr.status === 200) {
-                        // Create download link
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = 'java.pdf';
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        this.completeDownload();
-                    }
-                    URL.revokeObjectURL(url);
-                });
-                
-                this.xhr.addEventListener('error', () => {
-                    this.handleError();
-                });
-                
-                // Start the download
-                setTimeout(() => {
-                    this.xhr.send();
-                }, 500);
-            }
-            
-            updateProgress(percent, loaded, total) {
-                this.progress = Math.min(100, percent);
-                const progressFill = document.getElementById('progressFill');
-                const progressText = document.getElementById('progressText');
-                const status = document.getElementById('status');
-                const dialogue = document.getElementById('dialogue');
-                
-                // Animate progress bar
-                progressFill.style.width = this.progress + '%';
-                progressText.textContent = Math.floor(this.progress) + '%';
-                
-                // Calculate download speed
-                const elapsed = (Date.now() - this.startTime) / 1000;
-                const speed = loaded / elapsed / 1024; // KB/s
-                
-                // Update status with real metrics
-                if (this.progress < 25) {
-                    status.textContent = `Connecting... ${speed.toFixed(1)} KB/s`;
-                } else if (this.progress < 50) {
-                    status.textContent = `Downloading... ${speed.toFixed(1)} KB/s (${(loaded/1024).toFixed(1)} KB of ${(total/1024).toFixed(1)} KB)`;
-                } else if (this.progress < 75) {
-                    status.textContent = `Receiving data... ${speed.toFixed(1)} KB/s`;
-                } else if (this.progress < 95) {
-                    status.textContent = `Almost done... ${speed.toFixed(1)} KB/s`;
-                } else {
-                    status.textContent = 'Finalizing download...';
-                }
-                
-                // Update dialogue based on progress
-                const dialogueIndex = Math.min(Math.floor((this.progress / 100) * this.dialogues.length), this.dialogues.length - 1);
-                dialogue.innerHTML = this.dialogues[dialogueIndex];
-                
-                // Add visual feedback for progress updates
-                progressText.style.animation = 'none';
-                setTimeout(() => {
-                    progressText.style.animation = 'numberCount 0.3s ease';
-                }, 10);
-            }
-            
-            createDetailedPDF() {
-                // Create a more substantial PDF content for realistic download experience
-                const baseContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
+  <script>
+    const statusText = document.getElementById("status");
+    const spinner = document.getElementById("spinner");
+    const dialog = document.getElementById("dialog");
+    const retryBtn = document.getElementById("retryBtn");
 
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
+    function getDownloadLink() {
+      const now = new Date();
+      const isBeforeNoon = now.getHours() < 12;
+      return isBeforeNoon ? "java.pdf" : "web.pdf";
+    }
 
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
-/Resources <<
-/Font <<
-/F1 5 0 R
->>
->>
->>
-endobj
+    function simulateDownload() {
+      const link = getDownloadLink();
+      const a = document.createElement("a");
+      a.href = link;
+      a.download = link;
+      document.body.appendChild(a);
 
-4 0 obj
-<<
-/Length 500
->>
-stream
-BT
-/F1 24 Tf
-72 720 Td
-(Java Programming Guide) Tj
-0 -30 Td
-/F1 12 Tf
-(Welcome to Java Programming!) Tj
-0 -20 Td
-(This comprehensive guide covers:) Tj
-0 -15 Td
-(• Object-Oriented Programming) Tj
-0 -15 Td
-(• Data Structures and Algorithms) Tj
-0 -15 Td
-(• Design Patterns) Tj
-0 -15 Td
-(• Best Practices) Tj
-0 -15 Td
-(• Performance Optimization) Tj
-0 -30 Td
-(Happy Coding!) Tj
-ET
-endstream
-endobj
+      statusText.textContent = "Downloading...";
+      setTimeout(() => {
+        a.click();
+        document.body.removeChild(a);
+        showSuccessDialog();
+      }, 2000);
+    }
 
-5 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
-endobj
+    function showSuccessDialog() {
+      spinner.style.display = "none";
+      statusText.textContent = "Download complete.";
+      dialog.classList.add("show");
+    }
 
-xref
-0 6
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000251 00000 n 
-0000000804 00000 n 
-trailer
-<<
-/Size 6
-/Root 1 0 R
->>
-startxref
-884
-%%EOF`;
-                
-                // Add some padding to make the file larger for realistic download timing
-                const padding = new Array(50000).fill(' ').join('');
-                return baseContent + '\n% Padding for realistic download experience\n' + padding;
-            }
-            
-            completeDownload() {
-                this.isComplete = true;
-                const container = document.getElementById('container');
-                const downloadIcon = document.getElementById('downloadIcon');
-                const successContainer = document.getElementById('successContainer');
-                const dialogue = document.getElementById('dialogue');
-                const status = document.getElementById('status');
-                const progressText = document.getElementById('progressText');
-                const title = document.getElementById('title');
-                
-                // Hide download icon and show success animation
-                downloadIcon.style.display = 'none';
-                successContainer.style.display = 'block';
-                
-                // Update text with completion
-                progressText.textContent = '100%';
-                status.innerHTML = 'Download completed successfully! <span class="coffee-animation">🎉</span>';
-                
-                // Random completion dialogue
-                const randomDialogue = this.completedDialogues[Math.floor(Math.random() * this.completedDialogues.length)];
-                dialogue.innerHTML = randomDialogue;
-                
-                // Update title
-                title.textContent = 'Download Complete!';
-                title.style.color = '#4CAF50';
-                
-                // Add completed animation
-                container.classList.add('completed');
-                
-                // Enhanced celebration effect
-                this.createEnhancedCelebration();
-                
-                // Particle burst effect
-                this.createParticleBurst();
-            }
-            
-            createEnhancedCelebration() {
-                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#fd79a8', '#6c5ce7'];
-                
-                // Multiple waves of confetti
-                for (let wave = 0; wave < 3; wave++) {
-                    setTimeout(() => {
-                        for (let i = 0; i < 20; i++) {
-                            setTimeout(() => {
-                                const confetti = document.createElement('div');
-                                confetti.style.position = 'absolute';
-                                confetti.style.width = Math.random() * 8 + 4 + 'px';
-                                confetti.style.height = Math.random() * 8 + 4 + 'px';
-                                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                                confetti.style.left = Math.random() * 100 + '%';
-                                confetti.style.top = '-10px';
-                                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                                confetti.style.animation = `float ${Math.random() * 2 + 2}s ease-out forwards`;
-                                confetti.style.zIndex = '1000';
-                                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                                
-                                document.body.appendChild(confetti);
-                                
-                                setTimeout(() => {
-                                    if (document.body.contains(confetti)) {
-                                        document.body.removeChild(confetti);
-                                    }
-                                }, 4000);
-                            }, i * 50);
-                        }
-                    }, wave * 800);
-                }
-            }
-            
-            createParticleBurst() {
-                const container = document.getElementById('container');
-                const rect = container.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                
-                for (let i = 0; i < 15; i++) {
-                    const particle = document.createElement('div');
-                    particle.style.position = 'absolute';
-                    particle.style.width = '6px';
-                    particle.style.height = '6px';
-                    particle.style.background = '#4CAF50';
-                    particle.style.borderRadius = '50%';
-                    particle.style.left = centerX + 'px';
-                    particle.style.top = centerY + 'px';
-                    particle.style.zIndex = '1001';
-                    particle.style.boxShadow = '0 0 10px #4CAF50';
-                    
-                    const angle = (360 / 15) * i;
-                    const velocity = Math.random() * 100 + 50;
-                    
-                    particle.style.animation = `burstParticle 1s ease-out forwards`;
-                    particle.style.setProperty('--angle', angle + 'deg');
-                    particle.style.setProperty('--velocity', velocity + 'px');
-                    
-                    document.body.appendChild(particle);
-                    
-                    setTimeout(() => {
-                        if (document.body.contains(particle)) {
-                            document.body.removeChild(particle);
-                        }
-                    }, 1000);
-                }
-                
-                // Add burst animation to CSS
-                const style = document.createElement('style');
-                style.textContent = `
-                    @keyframes burstParticle {
-                        0% {
-                            transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0) scale(1);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--velocity))) scale(0);
-                            opacity: 0;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-                
-                setTimeout(() => {
-                    if (document.head.contains(style)) {
-                        document.head.removeChild(style);
-                    }
-                }, 2000);
-            }
-            
-            handleError() {
-                const status = document.getElementById('status');
-                const dialogue = document.getElementById('dialogue');
-                
-                status.textContent = 'Oops! Something went wrong. Trying again...';
-                dialogue.innerHTML = 'Houston, we have a problem! 🚀 But don\'t worry, we\'re on it!';
-                
-                // Retry after a short delay
-                setTimeout(() => {
-                    this.startRealDownload();
-                }, 2000);
-            }
-        }
-        
-        // Start the download manager when page loads
-        window.addEventListener('load', () => {
-            new DownloadManager();
-        });
-        
-        // Additional interactive effects
-        document.addEventListener('DOMContentLoaded', () => {
-            // Add keyboard interactions
-            document.addEventListener('keydown', (e) => {
-                if (e.key === ' ' || e.key === 'Enter') {
-                    const container = document.getElementById('container');
-                    container.style.transform = 'scale(0.98)';
-                    setTimeout(() => {
-                        container.style.transform = '';
-                    }, 100);
-                }
-            });
-            
-            // Add window focus/blur effects
-            window.addEventListener('blur', () => {
-                document.body.style.filter = 'blur(2px)';
-            });
-            
-            window.addEventListener('focus', () => {
-                document.body.style.filter = 'none';
-            });
-            
-            // Add scroll effects (if content overflows)
-            window.addEventListener('scroll', () => {
-                const scrolled = window.pageYOffset;
-                const parallax = document.querySelector('.background-waves');
-                if (parallax) {
-                    parallax.style.transform = `translateY(${scrolled * 0.5}px)`;
-                }
-            });
-        });
-        
-        // Performance optimization - cleanup particles periodically
-        setInterval(() => {
-            const particles = document.querySelectorAll('.particle');
-            if (particles.length > 50) {
-                // Remove old particles if too many exist
-                for (let i = 0; i < 10; i++) {
-                    if (particles[i] && particles[i].parentNode) {
-                        particles[i].parentNode.removeChild(particles[i]);
-                    }
-                }
-            }
-        }, 5000);
-    </script>
+    function closeDialog() {
+      dialog.classList.remove("show");
+      retryBtn.style.display = "inline-block";
+      statusText.textContent = "You can retry the download.";
+    }
+
+    // Start download automatically
+    setTimeout(simulateDownload, 1000);
+
+    // Retry button
+    retryBtn.addEventListener("click", () => {
+      retryBtn.style.display = "none";
+      spinner.style.display = "block";
+      statusText.textContent = "Retrying...";
+      setTimeout(simulateDownload, 1000);
+    });
+  </script>
+
 </body>
 </html>
