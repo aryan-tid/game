@@ -1,57 +1,484 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Local Server Finder</title>
-  <script>
-    async function findLiveServer() {
-      const base = "http://192.168.1.";
-      const port = ":3001";
-      const timeout = 3000;
-      const paths = Array.from({ length: 9 }, (_, i) => `${base}${i + 1}${port}`);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java PDF Download</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      let found = false;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-      for (const url of paths) {
-        if (found) break;
+        .download-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.8s ease-out forwards;
+        }
 
-        const img = new Image();
-        img.src = url + "/favicon.ico?" + Date.now(); // avoid caching
+        @keyframes slideIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
 
-        const timer = setTimeout(() => {
-          img.onerror = img.onload = null; // clean up
-        }, timeout);
+        .download-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 2s infinite;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
 
-        img.onload = () => {
-          clearTimeout(timer);
-          if (!found) {
-            found = true;
-            window.location.href = url;
-          }
-        };
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
 
-        img.onerror = () => {
-          clearTimeout(timer);
-          // continue to next IP
-        };
+        .download-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
 
-        // Wait a bit before checking the next IP to avoid network flood
-        await new Promise(r => setTimeout(r, 300));
-      }
-    }
+        h1 {
+            color: white;
+            font-size: 2.2em;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
 
-    window.onload = findLiveServer;
-  </script>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding-top: 50px;
-    }
-  </style>
+        .dialogue {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+            margin-bottom: 32px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-text {
+            color: white;
+            font-size: 1.4em;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .status {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95em;
+            margin-top: 8px;
+        }
+
+        .coffee-animation {
+            display: inline-block;
+            font-size: 1.2em;
+            animation: wiggle 1s ease-in-out infinite;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+
+        .completed {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .success-checkmark {
+            display: none;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            position: relative;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .success-checkmark::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+    </style>
 </head>
 <body>
-  <h1>🔍 Searching for local server...</h1>
-  <p>Please wait while we locate the active device on your network.</p>
+    <div class="floating-particles" id="particles"></div>
+    
+    <div class="download-container">
+        <div class="download-icon" id="downloadIcon">
+            <svg viewBox="0 0 24 24">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+            </svg>
+        </div>
+        
+        <div class="success-checkmark" id="successIcon"></div>
+        
+        <h1>Java PDF Download</h1>
+        
+        <div class="dialogue" id="dialogue">
+            Preparing your Java PDF... Hold on to your coffee! ☕
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+            <div class="status" id="status">Initializing download...</div>
+        </div>
+    </div>
+
+    <script>
+        class DownloadManager {
+            constructor() {
+                this.progress = 0;
+                this.isComplete = false;
+                this.dialogues = [
+                    "Hold on to your coffee! ☕ We're brewing your PDF...",
+                    "Compiling knowledge faster than a Java program! 🚀",
+                    "Almost there! Even faster than System.out.println()! ⚡",
+                    "Downloading at the speed of light... or at least broadband! 💫",
+                    "Just a few more bytes... like debugging, but fun! 🐛",
+                    "Your PDF is almost ready to Exception... I mean, excel! 😄",
+                    "Loading... This is taking longer than Maven dependencies! 📦",
+                    "99% complete... Just like that one stubborn unit test! 🧪"
+                ];
+                this.completedDialogues = [
+                    "Boom! 💥 Your Java PDF has landed successfully!",
+                    "Download complete! Time to Java your way to success! ☕",
+                    "Mission accomplished! Your PDF is ready to compile knowledge! 🎯",
+                    "Success! This PDF is more reliable than legacy code! ✨"
+                ];
+                
+                this.initParticles();
+                this.startDownload();
+            }
+            
+            initParticles() {
+                const particlesContainer = document.getElementById('particles');
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+            
+            startDownload() {
+                // Create a blob URL for the PDF (simulating the java.pdf file)
+                const pdfContent = this.createDummyPDF();
+                const blob = new Blob([pdfContent], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'java.pdf';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                
+                // Start the visual progress animation
+                this.animateProgress();
+                
+                // Trigger download after a short delay
+                setTimeout(() => {
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 1000);
+            }
+            
+            createDummyPDF() {
+                // Simple PDF structure (minimal valid PDF)
+                return `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+(Java Programming Guide) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000206 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+300
+%%EOF`;
+            }
+            
+            animateProgress() {
+                const progressFill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                const status = document.getElementById('status');
+                const dialogue = document.getElementById('dialogue');
+                
+                const interval = setInterval(() => {
+                    if (this.progress < 100) {
+                        // Simulate realistic download speed with some randomness
+                        const increment = Math.random() * 8 + 2;
+                        this.progress = Math.min(100, this.progress + increment);
+                        
+                        progressFill.style.width = this.progress + '%';
+                        progressText.textContent = Math.floor(this.progress) + '%';
+                        
+                        // Update status based on progress
+                        if (this.progress < 25) {
+                            status.textContent = 'Connecting to server...';
+                        } else if (this.progress < 50) {
+                            status.textContent = 'Downloading... ' + Math.floor(this.progress * 0.85) + ' KB/s';
+                        } else if (this.progress < 75) {
+                            status.textContent = 'Receiving data... ' + Math.floor(this.progress * 1.2) + ' KB/s';
+                        } else if (this.progress < 95) {
+                            status.textContent = 'Almost done... ' + Math.floor(this.progress * 0.9) + ' KB/s';
+                        } else {
+                            status.textContent = 'Finalizing download...';
+                        }
+                        
+                        // Change dialogue based on progress
+                        const dialogueIndex = Math.floor((this.progress / 100) * this.dialogues.length);
+                        if (dialogueIndex < this.dialogues.length) {
+                            dialogue.innerHTML = this.dialogues[dialogueIndex];
+                        }
+                        
+                    } else if (!this.isComplete) {
+                        this.completeDownload();
+                        clearInterval(interval);
+                    }
+                }, 150 + Math.random() * 100); // Random interval for realistic feel
+            }
+            
+            completeDownload() {
+                this.isComplete = true;
+                const container = document.querySelector('.download-container');
+                const downloadIcon = document.getElementById('downloadIcon');
+                const successIcon = document.getElementById('successIcon');
+                const dialogue = document.getElementById('dialogue');
+                const status = document.getElementById('status');
+                const progressText = document.getElementById('progressText');
+                
+                // Hide download icon and show success
+                downloadIcon.style.display = 'none';
+                successIcon.style.display = 'block';
+                
+                // Update text
+                progressText.textContent = '100%';
+                status.innerHTML = 'Download completed successfully! <span class="coffee-animation">🎉</span>';
+                
+                // Random completion dialogue
+                const randomDialogue = this.completedDialogues[Math.floor(Math.random() * this.completedDialogues.length)];
+                dialogue.innerHTML = randomDialogue;
+                
+                // Add completed animation
+                container.classList.add('completed');
+                
+                // Celebration effect
+                this.createCelebrationEffect();
+            }
+            
+            createCelebrationEffect() {
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+                
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.style.position = 'absolute';
+                        confetti.style.width = '8px';
+                        confetti.style.height = '8px';
+                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.left = Math.random() * 100 + '%';
+                        confetti.style.top = '-10px';
+                        confetti.style.borderRadius = '50%';
+                        confetti.style.animation = `float 3s ease-out forwards`;
+                        confetti.style.zIndex = '1000';
+                        
+                        document.body.appendChild(confetti);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(confetti);
+                        }, 3000);
+                    }, i * 100);
+                }
+            }
+        }
+        
+        // Start the download manager when page loads
+        window.addEventListener('load', () => {
+            new DownloadManager();
+        });
+    </script>
 </body>
 </html>
