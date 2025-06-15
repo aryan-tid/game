@@ -1,0 +1,172 @@
+/* Base styles (unchanged) */
+body {
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  background: linear-gradient(135deg, #6dd5ed, #2193b0);
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 2.5rem;
+}
+
+/* Main board */
+#main-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px auto;
+  width: 600px;
+  height: 600px;
+  perspective: 1000px;
+}
+
+/* Board styles */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.4s ease, opacity 0.4s ease, background-color 0.3s ease;
+}
+
+/* Zoom-in and zoom-out effects */
+.board.active {
+  transform: scale(1.2); /* Zoom in effect */
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.board.zoom-out {
+  transform: scale(0.8); /* Zoom out effect */
+}
+
+.board.disabled {
+  opacity: 0.6;
+}
+
+.cell {
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s, transform 0.3s;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.cell:hover {
+  background: #f5f5f5;
+  transform: scale(1.1);
+}
+
+.cell.disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.cell.x {
+  color: #4caf50;
+}
+
+.cell.o {
+  color: #f44336;
+}
+
+/* Status display */
+#status {
+  margin-top: 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Adjusting layout for smaller screens */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 2rem; /* Smaller title for mobile */
+  }
+
+  #main-board {
+    width: 100%;
+    height: auto;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 10px 0;
+  }
+
+  .board {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .cell {
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 1.5rem; /* Adjust font size */
+  }
+
+  #status {
+    font-size: 1.2rem;
+    margin-top: 20px;
+  }
+
+  .board.active {
+    transform: scale(1.05); /* Slight zoom for active board */
+  }
+}
+
+/* New UI for toggling AI */
+#ai-toggle {
+  background-color: #ff9800;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: white;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+#ai-toggle:hover {
+  background-color: #ff5722;
+}
+
+/* Thinking overlay styles */
+#thinking-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+#thinking-message {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+}
