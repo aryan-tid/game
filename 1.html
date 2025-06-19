@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram TOTP Authenticator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 70px rgba(0, 0, 0, 0.4);
+        }
+
+        .login-form {
+            text-align: center;
+        }
+
+        .login-form h2 {
+            margin-bottom: 30px;
+            font-weight: 300;
+            font-size: 2rem;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .totp-display {
+            display: none;
+            text-align: center;
+        }
+
+        .totp-display h2 {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-weight: 300;
+            font-size: 1.5rem;
+        }
+
+        .instagram-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .totp-code {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 30px 0;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-container {
+            margin: 20px 0;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 1s linear;
+        }
+
+        .timer-text {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .time-display {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .current-time {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .time-zone {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .sync-info {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .sync-info p {
+            margin: 0;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .account-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .account-info p {
+            margin: 5px 0;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .error {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Form -->
+        <div id="loginForm" class="login-form">
+            <h2>Access Authenticator</h2>
+            <div class="input-group">
+                <input type="password" id="passwordInput" placeholder="Enter password">
+            </div>
+            <button class="btn" onclick="authenticate()">Unlock</button>
+            <div id="errorMsg" class="error">Invalid password. Please try again.</div>
+        </div>
+
+        <!-- TOTP Display -->
+        <div id="totpDisplay" class="totp-display">
+            <div class="time-display">
+                <div class="current-time" id="currentTime">00:00:00</div>
+                <div class="time-zone">India Standard Time (IST)</div>
+                <div class="sync-info">
+                    <p>⏱️ TOTP Epoch: <span id="epochTime">0</span> | Next sync in: <span id="nextSync">0</span>s</p>
+                </div>
+            </div>
+            
+            <h2>
+                <div class="instagram-icon">📷</div>
+                Instagram TOTP
+            </h2>
+            <div class="totp-code" id="totpCode">000000</div>
+            <div class="timer-container">
+                <div class="timer-bar">
+                    <div class="timer-fill" id="timerFill"></div>
+                </div>
+                <div class="timer-text" id="timerText">Refreshes in 30s</div>
+            </div>
+            <div class="account-info">
+                <p><strong>Account:</strong> ix_riyu_05</p>
+                <p><strong>Issuer:</strong> Instagram</p>
+                <p><strong>Algorithm:</strong> SHA1</p>
+                <p><strong>Digits:</strong> 6</p>
+                <p><strong>Period:</strong> 30 seconds</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        const PASSWORD = "rn@1234567890";
+        const SECRET = "UHXIGBN3XBZ3HM52EMADO5JQM322DRC5";
+        
+        let totpInterval;
+        let timerInterval;
+        let clockInterval;
+
+        // Get current time in IST
+        function getISTTime() {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const istTime = new Date(utc + istOffset);
+            return istTime;
+        }
+
+        // Get Unix timestamp in IST
+        function getISTUnixTime() {
+            return Math.floor(getISTTime().getTime() / 1000);
+        }
+
+        function updateClock() {
+            const istTime = getISTTime();
+            const timeString = istTime.toLocaleTimeString('en-IN', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+            
+            // Update epoch time for debugging
+            const epoch = getISTUnixTime();
+            document.getElementById('epochTime').textContent = epoch;
+            
+            const nextSyncIn = 30 - (epoch % 30);
+            document.getElementById('nextSync').textContent = nextSyncIn;
+        }
+
+        function authenticate() {
+            const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (password === PASSWORD) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('totpDisplay').style.display = 'block';
+                startTOTP();
+                errorMsg.classList.remove('show');
+            } else {
+                errorMsg.classList.add('show');
+                setTimeout(() => errorMsg.classList.remove('show'), 3000);
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('totpDisplay').style.display = 'none';
+            document.getElementById('passwordInput').value = '';
+            clearInterval(totpInterval);
+            clearInterval(timerInterval);
+            clearInterval(clockInterval);
+        }
+
+        function base32Decode(base32) {
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let bits = '';
+            let value = 0;
+            
+            base32 = base32.replace(/=+$/, '').toUpperCase();
+            
+            for (let i = 0; i < base32.length; i++) {
+                value = (value << 5) | alphabet.indexOf(base32[i]);
+                bits += (value >>> 0).toString(2).padStart(5, '0').slice(-5);
+            }
+            
+            const bytes = [];
+            for (let i = 0; i + 8 <= bits.length; i += 8) {
+                bytes.push(parseInt(bits.substr(i, 8), 2));
+            }
+            
+            return new Uint8Array(bytes);
+        }
+
+        function generateTOTP() {
+            // Use IST time for TOTP calculation
+            const istUnixTime = getISTUnixTime();
+            const timeStep = Math.floor(istUnixTime / 30);
+            
+            // Convert time step to 8-byte big-endian format
+            const timeBuffer = new ArrayBuffer(8);
+            const timeView = new DataView(timeBuffer);
+            
+            // JavaScript numbers are 53-bit precision, so we handle this carefully
+            const high = Math.floor(timeStep / 0x100000000);
+            const low = timeStep & 0xFFFFFFFF;
+            timeView.setUint32(0, high, false); // big-endian
+            timeView.setUint32(4, low, false);  // big-endian
+            
+            const timeBytes = new Uint8Array(timeBuffer);
+            
+            // Decode base32 secret
+            const key = base32Decode(SECRET);
+            
+            // Convert to CryptoJS format
+            const keyWords = CryptoJS.lib.WordArray.create(key);
+            const timeWords = CryptoJS.lib.WordArray.create(timeBytes);
+            
+            // Generate HMAC-SHA1
+            const hmac = CryptoJS.HmacSHA1(timeWords, keyWords);
+            const hmacBytes = [];
+            
+            // Convert HMAC to byte array
+            const hmacHex = hmac.toString(CryptoJS.enc.Hex);
+            for (let i = 0; i < hmacHex.length; i += 2) {
+                hmacBytes.push(parseInt(hmacHex.substr(i, 2), 16));
+            }
+            
+            // Dynamic truncation
+            const offset = hmacBytes[19] & 0xf;
+            const code = ((hmacBytes[offset] & 0x7f) << 24) |
+                        ((hmacBytes[offset + 1] & 0xff) << 16) |
+                        ((hmacBytes[offset + 2] & 0xff) << 8) |
+                        (hmacBytes[offset + 3] & 0xff);
+            
+            // Return 6-digit code
+            const totp = (code % 1000000).toString().padStart(6, '0');
+            
+            console.log(`IST Unix Time: ${istUnixTime}, Time Step: ${timeStep}, TOTP: ${totp}`);
+            return totp;
+        }
+
+        function updateTOTP() {
+            const code = generateTOTP();
+            document.getElementById('totpCode').textContent = code;
+        }
+
+        function updateTimer() {
+            const istUnixTime = getISTUnixTime();
+            const timeLeft = 30 - (istUnixTime % 30);
+            const percentage = (timeLeft / 30) * 100;
+            
+            document.getElementById('timerFill').style.width = percentage + '%';
+            document.getElementById('timerText').textContent = `Refreshes in ${timeLeft}s`;
+            
+            // Update TOTP when timer resets (every 30 seconds)
+            if (timeLeft === 30) {
+                updateTOTP();
+            }
+        }
+
+        function startTOTP() {
+            // Initial updates
+            updateClock();
+            updateTOTP();
+            updateTimer();
+            
+            // Set up intervals
+            clockInterval = setInterval(updateClock, 1000);
+            totpInterval = setInterval(() => {
+                const istUnixTime = getISTUnixTime();
+                if (istUnixTime % 30 === 0) {
+                    updateTOTP();
+                }
+            }, 1000);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Handle Enter key press
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                authenticate();
+            }
+        });
+    </script>
+</body>
+</html>
